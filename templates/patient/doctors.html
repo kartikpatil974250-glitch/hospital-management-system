@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Find Doctors — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Doctors Directory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Find Hospital Specialists</h1>
+    <p class="page-subtitle">Browse certified physicians, review clinical qualifications, and schedule visits</p>
+  </div>
+</div>
+
+<!-- Search & Department Filters -->
+<div class="card" style="margin-bottom:var(--space-6);">
+  <div class="card-body">
+    <form method="GET" action="{{ url_for('patient.doctors') }}" style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div style="flex:2;min-width:240px;">
+        <input type="text" name="q" class="form-control" placeholder="Search doctor name, specialization..." value="{{ search_query or '' }}">
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <select name="department_id" class="form-control">
+          <option value="">All Clinical Departments</option>
+          {% for dept in departments %}
+            <option value="{{ dept.department_id }}" {% if selected_dept == dept.department_id %}selected{% endif %}>
+              {{ dept.department_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Filter Directory</button>
+      {% if search_query or selected_dept %}
+        <a href="{{ url_for('patient.doctors') }}" class="btn btn-outline">Reset</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Doctors Grid -->
+{% if doctors %}
+  <div class="grid-3">
+    {% for doc in doctors %}
+      <div class="doctor-card">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+          <div class="doctor-avatar-circle" style="margin-bottom:0;">{{ doc.full_name[4:5] }}</div>
+          <div>
+            <h3 class="doctor-card-name" style="font-size:1.1rem;margin-bottom:2px;">{{ doc.full_name }}</h3>
+            <div class="doctor-card-spec">{{ doc.specialization }}</div>
+          </div>
+        </div>
+
+        <ul class="doctor-meta-list">
+          <li><span>Department:</span> <span class="val">{{ doc.department_name }} ({{ doc.location }})</span></li>
+          <li><span>Qualifications:</span> <span class="val">{{ doc.qualification }}</span></li>
+          <li><span>Clinical Experience:</span> <span class="val">{{ doc.years_experience }} Years</span></li>
+          <li><span>Consultation Fee:</span> <span class="val" style="color:var(--primary-blue);">{{ doc.consultation_fee|currency_fmt }}</span></li>
+          <li><span>Contact:</span> <span class="val">{{ doc.phone }}</span></li>
+        </ul>
+
+        <div style="margin-top:auto;display:flex;gap:8px;">
+          {% if current_user and current_user.role == 'patient' %}
+            <a href="{{ url_for('appointments.book', doctor_id=doc.doctor_id) }}" class="btn btn-primary" style="flex:1;">
+              Book Appointment
+            </a>
+          {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline" style="flex:1;">
+              Sign In to Book
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">&#9877;</div>
+      <div class="empty-title">No doctors found</div>
+      <p class="empty-text">No doctors matched your search criteria. Try modifying your filters.</p>
+      <a href="{{ url_for('patient.doctors') }}" class="btn btn-outline btn-sm">Clear Filters</a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

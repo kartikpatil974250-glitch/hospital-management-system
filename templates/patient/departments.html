@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Hospital Departments — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Departments{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Hospital Clinical Departments</h1>
+    <p class="page-subtitle">Comprehensive diagnostic wings, inpatient units, and outpatient clinics</p>
+  </div>
+</div>
+
+<div class="grid-3">
+  {% for dept in departments %}
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div class="card-header">
+        <h3 class="card-title">{{ dept.department_name }}</h3>
+        <span class="badge badge-info">{{ dept.doctor_count }} Clinicians</span>
+      </div>
+      <div class="card-body" style="flex:1;">
+        <p style="color:var(--text-secondary);font-size:var(--font-size-sm);line-height:1.6;margin-bottom:16px;">
+          {{ dept.description }}
+        </p>
+
+        <div style="font-size:var(--font-size-xs);border-top:1px solid var(--border-color);padding-top:12px;">
+          <div style="margin-bottom:6px;">
+            <strong style="color:var(--text-primary);">&#128205; Location:</strong> {{ dept.location }}
+          </div>
+          <div>
+            <strong style="color:var(--text-primary);">&#9742; Direct Line:</strong> {{ dept.contact_number }}
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="{{ url_for('patient.doctors', department_id=dept.department_id) }}" class="btn btn-outline btn-sm" style="width:100%;">
+          View Department Specialists &rarr;
+        </a>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

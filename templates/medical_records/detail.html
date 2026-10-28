@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Medical Record #{{ record.record_id }} — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Medical Record #{{ record.record_id }}{% endblock %}
+
+{% block content %}
+<div class="page-header no-print">
+  <div>
+    <h1 class="page-title">Electronic Medical Record #{{ record.record_id }}</h1>
+    <p class="page-subtitle">Visit on {{ record.visit_date|date_fmt }} with {{ record.doctor_name }}</p>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="window.print();" class="btn btn-outline">
+      &#128424; Print Record
+    </button>
+    {% if record.prescription %}
+      <a href="{{ url_for('prescriptions.detail', prescription_id=record.prescription.prescription_id) }}" class="btn btn-primary">
+        View Issued Prescription &rarr;
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="max-width:850px;margin:0 auto;">
+  <div class="card-body">
+    <!-- Header Patient & Clinician Block -->
+    <div style="display:flex;justify-content:space-between;border-bottom:2px solid var(--border-color);padding-bottom:16px;margin-bottom:20px;">
+      <div>
+        <h2 style="font-size:var(--font-size-xl);color:var(--text-primary);font-weight:700;">{{ record.patient_name }}</h2>
+        <div style="font-size:var(--font-size-xs);color:var(--text-secondary);margin-top:2px;">
+          {{ record.patient_gender }} &bull; DOB: {{ record.patient_dob|date_fmt }} &bull; Phone: {{ record.patient_phone }}
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <h3 style="font-size:var(--font-size-base);color:var(--text-primary);font-weight:700;">{{ record.doctor_name }}</h3>
+        <div style="font-size:var(--font-size-xs);color:var(--secondary-teal);">
+          {{ record.specialization }} ({{ record.department_name }})
+        </div>
+        <div style="font-size:var(--font-size-xs);color:var(--text-muted);">
+          Visit Date: {{ record.visit_date|date_fmt }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Clinical Findings -->
+    <div style="margin-bottom:24px;">
+      <h4 style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary);letter-spacing:0.05em;margin-bottom:4px;">
+        Symptoms & Clinical Presentation
+      </h4>
+      <p style="font-size:var(--font-size-sm);color:var(--text-primary);line-height:1.6;background:#F8FAFC;padding:12px;border-radius:var(--radius-md);border:1px solid var(--border-color);">
+        {{ record.symptoms }}
+      </p>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <h4 style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary);letter-spacing:0.05em;margin-bottom:4px;">
+        Assessment & Primary Diagnosis
+      </h4>
+      <div style="font-size:var(--font-size-lg);font-weight:700;color:var(--primary-blue);background:#EFF6FF;padding:12px;border-radius:var(--radius-md);border:1px solid #BFDBFE;">
+        {{ record.diagnosis }}
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div>
+        <h4 style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary);letter-spacing:0.05em;margin-bottom:4px;">
+          Allergies & Sensitivities
+        </h4>
+        <div style="font-size:var(--font-size-sm);color:{% if record.allergies %}var(--error){% else %}var(--text-primary){% endif %};font-weight:600;">
+          {{ record.allergies or 'None documented' }}
+        </div>
+      </div>
+
+      <div>
+        <h4 style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary);letter-spacing:0.05em;margin-bottom:4px;">
+          Scheduled Follow-Up
+        </h4>
+        <div style="font-size:var(--font-size-sm);font-weight:600;color:var(--text-primary);">
+          {% if record.follow_up_date %}
+            &#128197; {{ record.follow_up_date|date_fmt }}
+          {% else %}
+            As needed / Routine
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if record.treatment_notes %}
+    <div style="margin-bottom:24px;">
+      <h4 style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary);letter-spacing:0.05em;margin-bottom:4px;">
+        Treatment Notes & Advice
+      </h4>
+      <p style="font-size:var(--font-size-sm);color:var(--text-primary);line-height:1.6;">
+        {{ record.treatment_notes }}
+      </p>
+    </div>
+    {% endif %}
+
+    <!-- Associated Prescribed Medications -->
+    {% if record.prescription and record.prescription.medication_items %}
+    <div style="margin-top:30px;border-top:2px dashed var(--border-color);padding-top:20px;">
+      <h3 style="font-size:var(--font-size-base);font-weight:700;color:var(--text-primary);margin-bottom:12px;">
+        &#128138; Prescribed Medications (Rx #{{ record.prescription.prescription_id }})
+      </h3>
+      <table class="table" style="background:#F8FAFC;border-radius:var(--radius-md);overflow:hidden;">
+        <thead>
+          <tr>
+            <th>Medication</th>
+            <th>Dosage</th>
+            <th>Frequency</th>
+            <th>Duration</th>
+            <th>Instructions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in record.prescription.medication_items %}
+            <tr>
+              <td><strong>{{ item.medication_name }}</strong></td>
+              <td>{{ item.dosage }}</td>
+              <td>{{ item.frequency }}</td>
+              <td>{{ item.duration }}</td>
+              <td><small>{{ item.instructions or 'As directed' }}</small></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if record.prescription.instructions %}
+        <div style="margin-top:12px;font-size:var(--font-size-xs);color:var(--text-secondary);">
+          <strong>Directives:</strong> {{ record.prescription.instructions }}
+        </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

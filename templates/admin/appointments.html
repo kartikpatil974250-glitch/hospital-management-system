@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Hospital Appointments & Audit Trail — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Appointments & DB Triggers{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Hospital Appointments & Trigger Audit Log</h1>
+    <p class="page-subtitle">Central appointment roster backed by MySQL View and automated Trigger audit logs</p>
+  </div>
+</div>
+
+<!-- Status Filters -->
+<div style="display:flex;gap:8px;margin-bottom:var(--space-6);flex-wrap:wrap;">
+  <a href="{{ url_for('admin.appointments') }}" class="btn btn-sm {% if not current_status %}btn-primary{% else %}btn-outline{% endif %}">
+    All Appointments
+  </a>
+  <a href="{{ url_for('admin.appointments', status='Confirmed') }}" class="btn btn-sm {% if current_status == 'Confirmed' %}btn-primary{% else %}btn-outline{% endif %}">
+    Confirmed
+  </a>
+  <a href="{{ url_for('admin.appointments', status='Completed') }}" class="btn btn-sm {% if current_status == 'Completed' %}btn-primary{% else %}btn-outline{% endif %}">
+    Completed
+  </a>
+  <a href="{{ url_for('admin.appointments', status='Cancelled') }}" class="btn btn-sm {% if current_status == 'Cancelled' %}btn-primary{% else %}btn-outline{% endif %}">
+    Cancelled
+  </a>
+</div>
+
+<!-- All Appointments Table (from appointment_details_view) -->
+<div class="card" style="margin-bottom:var(--space-8);">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">Appointment Details (Queried via Database View: <code>appointment_details_view</code>)</h3>
+      <p class="page-subtitle">Unified relational join across appointments, patients, doctors, departments, and bills</p>
+    </div>
+  </div>
+  <div class="table-responsive">
+    {% if appointments %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Ref #</th>
+            <th>Date & Time</th>
+            <th>Patient</th>
+            <th>Physician</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Billing Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in appointments %}
+            <tr>
+              <td><strong>#{{ app.appointment_id }}</strong></td>
+              <td>
+                <strong>{{ app.appointment_date|date_fmt }}</strong><br>
+                <small style="color:var(--text-secondary);">{{ app.start_time|time_fmt }} - {{ app.end_time|time_fmt }}</small>
+              </td>
+              <td>
+                <strong>{{ app.patient_name }}</strong><br>
+                <small style="color:var(--text-secondary);">{{ app.patient_phone }}</small>
+              </td>
+              <td>
+                <strong>{{ app.doctor_name }}</strong><br>
+                <small style="color:var(--text-secondary);">{{ app.doctor_specialization }}</small>
+              </td>
+              <td>{{ app.department_name }}</td>
+              <td>
+                {% if app.status == 'Completed' %}
+                  <span class="badge badge-success">Completed</span>
+                {% elif app.status in ('Scheduled', 'Confirmed') %}
+                  <span class="badge badge-info">{{ app.status }}</span>
+                {% elif app.status == 'Cancelled' %}
+                  <span class="badge badge-danger">Cancelled</span>
+                {% else %}
+                  <span class="badge badge-neutral">{{ app.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if app.bill_id %}
+                  <span class="badge {% if app.bill_status == 'Paid' %}badge-success{% else %}badge-warning{% endif %}">
+                    {{ app.bill_status or 'Unpaid' }} ({{ app.bill_total|currency_fmt }})
+                  </span>
+                {% else %}
+                  <span class="badge badge-neutral">No Bill</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <a href="{{ url_for('appointments.confirmation', appointment_id=app.appointment_id) }}" class="btn btn-outline btn-sm">
+                    Details
+                  </a>
+                  {% if app.status in ('Scheduled', 'Confirmed') %}
+                    <form method="POST" action="{{ url_for('appointments.cancel', appointment_id=app.appointment_id) }}" onsubmit="return confirm('Cancel this appointment as admin?');" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                      <input type="hidden" name="cancellation_reason" value="Administrative cancellation">
+                      <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">&#128197;</div>
+        <div class="empty-title">No appointments found</div>
+        <p class="empty-text">No records matched the filter.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Database Trigger Audit Logs Table -->
+<div class="card">
+  <div class="card-header" style="background:#F8FAFC;">
+    <div>
+      <h3 class="card-title">&#9889; Database Trigger Status Audit Trail (<code>audit_appointment_logs</code>)</h3>
+      <p class="page-subtitle">
+        Automatically captured by MySQL Triggers (<code>trg_appointment_status_update</code> &amp; <code>trg_appointment_insert_audit</code>)
+      </p>
+    </div>
+    <span class="badge badge-info">{{ audit_logs|length }} Events Logged</span>
+  </div>
+  <div class="table-responsive">
+    {% if audit_logs %}
+      <table class="table" style="font-size:0.85rem;">
+        <thead>
+          <tr>
+            <th>Audit ID</th>
+            <th>Appointment #</th>
+            <th>Previous Status</th>
+            <th>Transition &rarr; New Status</th>
+            <th>Trigger Remarks</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in audit_logs %}
+            <tr>
+              <td><code>#AUD-{{ log.audit_id }}</code></td>
+              <td><strong>#{{ log.appointment_id }}</strong></td>
+              <td>
+                {% if log.old_status %}
+                  <span class="badge badge-neutral">{{ log.old_status }}</span>
+                {% else %}
+                  <span style="color:var(--text-muted);">&mdash; (Initial)</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge {% if log.new_status == 'Completed' %}badge-success{% elif log.new_status == 'Cancelled' %}badge-danger{% else %}badge-info{% endif %}">
+                  {{ log.new_status }}
+                </span>
+              </td>
+              <td>{{ log.remarks or 'Automated audit event' }}</td>
+              <td><small>{{ log.changed_at }}</small></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:var(--font-size-xs);">
+        No audit log transitions recorded yet. Trigger will record status changes on appointment updates.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

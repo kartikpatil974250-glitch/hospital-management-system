@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Patients — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Patients Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Registered Patients Roster</h1>
+    <p class="page-subtitle">View patient demographics, visit frequency, and contact records</p>
+  </div>
+</div>
+
+<!-- Search Bar -->
+<div class="card" style="margin-bottom:var(--space-6);">
+  <div class="card-body">
+    <form method="GET" action="{{ url_for('admin.patients') }}" style="display:flex;gap:12px;">
+      <input type="text" name="q" class="form-control" placeholder="Search patient by name, email, or telephone number..." value="{{ search_query or '' }}">
+      <button type="submit" class="btn btn-primary">Search</button>
+      {% if search_query %}
+        <a href="{{ url_for('admin.patients') }}" class="btn btn-outline">Reset</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    {% if patients %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Patient Name</th>
+            <th>Contact Details</th>
+            <th>Demographics</th>
+            <th>Emergency Contact</th>
+            <th>Visits</th>
+            <th>Registered On</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in patients %}
+            <tr>
+              <td><strong>#PT-{{ p.patient_id }}</strong></td>
+              <td><strong>{{ p.full_name }}</strong></td>
+              <td>
+                {{ p.email }}<br>
+                <small style="color:var(--text-secondary);">{{ p.phone }}</small>
+              </td>
+              <td>{{ p.gender }}, {{ p.date_of_birth|date_fmt }}</td>
+              <td><small>{{ p.emergency_contact or '—' }}</small></td>
+              <td>
+                <span class="badge badge-info">{{ p.total_visits }} Visits</span>
+              </td>
+              <td><small>{{ p.created_at|date_fmt }}</small></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">&#128100;</div>
+        <div class="empty-title">No patients found</div>
+        <p class="empty-text">No patient records match the query.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

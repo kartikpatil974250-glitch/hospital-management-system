@@ -1,0 +1,92 @@
+/* ==============================================================================
+   PULSECARE HOSPITAL MANAGEMENT SYSTEM - RESPONSIVE STYLES
+   ============================================================================== */
+
+/* Laptops and Desktops */
+@media (max-width: 1200px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Tablets (481px to 768px) */
+@media (max-width: 768px) {
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: -260px;
+    transition: left var(--transition-base);
+  }
+
+  .app-sidebar.open {
+    left: 0;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-block;
+  }
+
+  .main-content {
+    padding: var(--space-4);
+  }
+
+  .app-topbar {
+    padding: 0 var(--space-4);
+  }
+
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-wrapper {
+    flex-direction: column;
+  }
+
+  .auth-panel-visual {
+    display: none;
+  }
+
+  .auth-panel-form {
+    width: 100%;
+    padding: var(--space-6);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wizard-step-title {
+    display: none;
+  }
+}
+
+/* Mobile Screens (320px to 480px) */
+@media (max-width: 480px) {
+  .card-body, .card-header {
+    padding: var(--space-4);
+  }
+
+  .stat-card {
+    padding: var(--space-4);
+  }
+
+  .stat-value {
+    font-size: var(--font-size-xl);
+  }
+
+  .table th, .table td {
+    padding: 8px 10px;
+    font-size: var(--font-size-xs);
+  }
+
+  .btn {
+    width: 100%;
+    margin-bottom: var(--space-2);
+  }
+
+  .btn-sm {
+    width: auto;
+  }
+}

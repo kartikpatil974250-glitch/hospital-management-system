@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Hospital Departments — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Department Setup{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Hospital Department Management</h1>
+    <p class="page-subtitle">Configure clinical units, physical facilities, and direct communications</p>
+  </div>
+</div>
+
+<div class="grid-3">
+  <!-- Add Department Form (1 Col) -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">+ Add Department</h3>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin.departments') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="form-group">
+          <label class="form-label" for="department_name">Department Name *</label>
+          <input type="text" id="department_name" name="department_name" class="form-control" placeholder="e.g. Oncology" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="location">Location / Building Wing *</label>
+          <input type="text" id="location" name="location" class="form-control" placeholder="e.g. Block D, Floor 2" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="contact_number">Direct Extension / Phone *</label>
+          <input type="tel" id="contact_number" name="contact_number" class="form-control" placeholder="+1-555-0150" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Description</label>
+          <textarea id="description" name="description" class="form-control" rows="3" placeholder="Clinical specialties, scopes, and treatments offered..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px;">
+          Create Department
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Departments Table (2 Cols) -->
+  <div class="card" style="grid-column: span 2;">
+    <div class="card-header">
+      <h3 class="card-title">Active Clinical Units</h3>
+      <span class="badge badge-info">{{ departments|length }} Departments</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Location</th>
+            <th>Direct Line</th>
+            <th>Clinicians</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in departments %}
+            <tr>
+              <td><strong>{{ d.department_name }}</strong></td>
+              <td>{{ d.location }}</td>
+              <td>{{ d.contact_number }}</td>
+              <td><span class="badge badge-neutral">{{ d.doctor_count }} Doctors</span></td>
+              <td style="max-width:240px;"><small>{{ d.description|truncate(70) }}</small></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

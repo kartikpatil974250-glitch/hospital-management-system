@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}PulseCare Hospital — Modern Healthcare SaaS Platform{% endblock %}
+{% block breadcrumb %}Home{% endblock %}
+
+{% block content %}
+<div class="hero-section" style="background:linear-gradient(135deg, #1E3A8A 0%, #0D9488 100%);color:white;border-radius:var(--radius-lg);padding:var(--space-10) var(--space-8);margin-bottom:var(--space-8);position:relative;overflow:hidden;">
+  <div style="max-width:650px;position:relative;z-index:2;">
+    <span class="badge" style="background:rgba(255,255,255,0.2);color:#FFFFFF;margin-bottom:var(--space-3);">Healthcare DBMS Platform</span>
+    <h1 style="font-size:var(--font-size-3xl);font-weight:700;line-height:1.2;margin-bottom:var(--space-4);">
+      World-Class Healthcare, Streamlined Digitally.
+    </h1>
+    <p style="font-size:var(--font-size-base);color:#E2E8F0;line-height:1.6;margin-bottom:var(--space-6);">
+      Instant specialist appointment scheduling with concurrency-locked booking, clinical EHR documentation, digital prescriptions, and transparent billing.
+    </p>
+
+    <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;">
+      {% if not current_user %}
+        <a href="{{ url_for('auth.register', role='patient') }}" class="btn btn-secondary btn-lg">Register as Patient</a>
+        <a href="{{ url_for('auth.register', role='doctor') }}" class="btn btn-outline btn-lg" style="color:white;border-color:rgba(255,255,255,0.7);">Join as Doctor</a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-lg" style="color:white;border-color:rgba(255,255,255,0.5);">Sign In to Portal</a>
+      {% elif current_user.role == 'patient' %}
+        <a href="{{ url_for('appointments.book') }}" class="btn btn-secondary btn-lg">Book Appointment Now</a>
+        <a href="{{ url_for('patient.dashboard') }}" class="btn btn-outline btn-lg" style="color:white;border-color:white;">View My Dashboard</a>
+      {% elif current_user.role == 'doctor' %}
+        <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-secondary btn-lg">Doctor Dashboard</a>
+      {% elif current_user.role == 'admin' %}
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-lg">Hospital Administration</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Key Pillars -->
+<div class="grid-4" style="margin-bottom:var(--space-8);">
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Smart Scheduling</div>
+      <div style="font-size:var(--font-size-sm);color:var(--text-secondary);margin-top:8px;">
+        Database-level row locking prevents overlapping appointments and race conditions.
+      </div>
+    </div>
+    <div class="stat-icon icon-blue">&#128197;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Certified Clinicians</div>
+      <div style="font-size:var(--font-size-sm);color:var(--text-secondary);margin-top:8px;">
+        Multi-department specialists across cardiology, neurology, pediatrics, and more.
+      </div>
+    </div>
+    <div class="stat-icon icon-teal">&#9877;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Clinical EHR & Rx</div>
+      <div style="font-size:var(--font-size-sm);color:var(--text-secondary);margin-top:8px;">
+        Encrypted medical records, multi-item drug dosages, and printable consultation notes.
+      </div>
+    </div>
+    <div class="stat-icon icon-green">&#128203;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Transparent Invoicing</div>
+      <div style="font-size:var(--font-size-sm);color:var(--text-secondary);margin-top:8px;">
+        Itemized billing with simulated instant checkout via Card, UPI, or Cash ledger.
+      </div>
+    </div>
+    <div class="stat-icon icon-amber">&#128179;</div>
+  </div>
+</div>
+
+<!-- Featured Doctors Grid -->
+<div class="card" style="margin-bottom:var(--space-8);">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">Featured Medical Specialists</h3>
+      <p class="page-subtitle">Consult with board-certified physicians across major departments</p>
+    </div>
+    <a href="{{ url_for('patient.doctors') }}" class="btn btn-outline btn-sm">View All Doctors &rarr;</a>
+  </div>
+  <div class="card-body">
+    <div class="grid-4">
+      {% for doc in featured_doctors %}
+        <div class="doctor-card">
+          <div class="doctor-avatar-circle">{{ doc.full_name[4:5] }}</div>
+          <div class="doctor-card-name">{{ doc.full_name }}</div>
+          <div class="doctor-card-spec">{{ doc.specialization }}</div>
+          <ul class="doctor-meta-list">
+            <li><span>Department:</span> <span class="val">{{ doc.department_name }}</span></li>
+            <li><span>Experience:</span> <span class="val">{{ doc.years_experience }} Years</span></li>
+            <li><span>Consultation Fee:</span> <span class="val">{{ doc.consultation_fee|currency_fmt }}</span></li>
+          </ul>
+          {% if current_user and current_user.role == 'patient' %}
+            <a href="{{ url_for('appointments.book', doctor_id=doc.doctor_id) }}" class="btn btn-primary btn-sm">Book Appointment</a>
+          {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-sm">Sign In to Book</a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Departments Overview -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">Hospital Clinical Departments</h3>
+      <p class="page-subtitle">Equipped with diagnostic and specialized treatment facilities</p>
+    </div>
+    <a href="{{ url_for('patient.departments') }}" class="btn btn-outline btn-sm">All Departments &rarr;</a>
+  </div>
+  <div class="card-body">
+    <div class="grid-3">
+      {% for dept in departments %}
+        <div style="padding:var(--space-5);border:1px solid var(--border-color);border-radius:var(--radius-md);background:#F8FAFC;">
+          <h4 style="font-size:var(--font-size-base);font-weight:700;color:var(--text-primary);margin-bottom:6px;">{{ dept.department_name }}</h4>
+          <p style="font-size:var(--font-size-xs);color:var(--text-secondary);line-height:1.5;margin-bottom:12px;">{{ dept.description }}</p>
+          <div style="font-size:var(--font-size-xs);color:var(--primary-blue);font-weight:600;">Location: {{ dept.location }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}400 Bad Request — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Bad Request{% endblock %}
+{% block content %}
+<div class="card" style="max-width:540px;margin:40px auto;text-align:center;padding:var(--space-8);">
+  <div style="font-size:3.5rem;font-weight:800;color:var(--warning);margin-bottom:12px;">400</div>
+  <h2 style="font-size:var(--font-size-xl);font-weight:700;color:var(--text-primary);margin-bottom:8px;">Bad Request</h2>
+  <p style="color:var(--text-secondary);font-size:var(--font-size-sm);margin-bottom:24px;">The request could not be processed due to invalid parameters or expired security tokens (CSRF).</p>
+  <a href="{{ url_for('index') }}" class="btn btn-primary">Return to Homepage</a>
+</div>
+{% endblock %}

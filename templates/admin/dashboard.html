@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Hospital Administration Dashboard — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Admin Overview{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Hospital Administrative Control Center</h1>
+    <p class="page-subtitle">Real-time database analytics, clinician rosters, patient volumes, and revenue metrics</p>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <a href="{{ url_for('admin.doctors') }}" class="btn btn-primary">
+      + Register Doctor
+    </a>
+    <a href="{{ url_for('admin.departments') }}" class="btn btn-outline">
+      Manage Departments
+    </a>
+  </div>
+</div>
+
+<!-- Real Database-Driven Metric Cards (8 Core Indicators) -->
+<div class="grid-4" style="margin-bottom:var(--space-6);">
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Total Patients</div>
+      <div class="stat-value">{{ stats.total_patients or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-blue">&#128100;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Active Doctors</div>
+      <div class="stat-value">{{ stats.total_doctors or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-teal">&#9877;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Clinical Depts</div>
+      <div class="stat-value">{{ stats.total_departments or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-amber">&#9635;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Today's Visits</div>
+      <div class="stat-value">{{ stats.today_appointments or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-green">&#128197;</div>
+  </div>
+</div>
+
+<div class="grid-4" style="margin-bottom:var(--space-8);">
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Upcoming Visits</div>
+      <div class="stat-value">{{ stats.upcoming_appointments or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-blue">&#128197;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Completed Visits</div>
+      <div class="stat-value">{{ stats.completed_appointments or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-green">&#10003;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Total Payments</div>
+      <div class="stat-value" style="color:var(--success);">{{ stats.total_payments|currency_fmt }}</div>
+    </div>
+    <div class="stat-icon icon-green">&#128179;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Outstanding Balance</div>
+      <div class="stat-value" style="color:var(--error);">{{ stats.outstanding_balance|currency_fmt }}</div>
+    </div>
+    <div class="stat-icon icon-red">&#9888;</div>
+  </div>
+</div>
+
+<!-- Main Dashboard Split: Today's Schedule & Appointment Status Breakdown -->
+<div class="grid-2">
+  <!-- Today's Schedule -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Today's Hospital Appointments</h3>
+      <a href="{{ url_for('admin.appointments') }}" class="btn btn-outline btn-sm">All Appointments</a>
+    </div>
+    <div class="table-responsive">
+      {% if today_schedule %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Patient</th>
+              <th>Doctor</th>
+              <th>Department</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for app in today_schedule %}
+              <tr>
+                <td><strong>{{ app.start_time|time_fmt }}</strong></td>
+                <td>{{ app.patient_name }}</td>
+                <td>{{ app.doctor_name }}</td>
+                <td><small>{{ app.department_name }}</small></td>
+                <td>
+                  {% if app.status == 'Completed' %}
+                    <span class="badge badge-success">Completed</span>
+                  {% elif app.status in ('Scheduled', 'Confirmed') %}
+                    <span class="badge badge-info">{{ app.status }}</span>
+                  {% elif app.status == 'Cancelled' %}
+                    <span class="badge badge-danger">Cancelled</span>
+                  {% else %}
+                    <span class="badge badge-neutral">{{ app.status }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">&#128197;</div>
+          <div class="empty-title">No appointments scheduled for today</div>
+          <p class="empty-text">Outpatient queues for today are currently clear.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Status Distribution & Recent Registrations -->
+  <div>
+    <!-- Status Breakdown -->
+    <div class="card" style="margin-bottom:var(--space-6);">
+      <div class="card-header">
+        <h3 class="card-title">Appointment Status Distribution (Live MySQL Data)</h3>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          {% for item in status_distribution %}
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:var(--font-size-xs);margin-bottom:4px;">
+                <strong>{{ item.status }}</strong>
+                <span>{{ item.count }} appointments</span>
+              </div>
+              <div style="height:8px;background:#F1F5F9;border-radius:4px;overflow:hidden;">
+                <div style="height:100%;width:{% if stats.total_patients %}{{ (item.count / 20 * 100)|int }}%{% else %}10%{% endif %};background:var(--primary-blue);border-radius:4px;"></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Patient Registrations -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Recent Patient Registrations</h3>
+        <a href="{{ url_for('admin.patients') }}" class="btn btn-outline btn-sm">All Patients</a>
+      </div>
+      <div class="table-responsive">
+        {% if recent_patients %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Phone</th>
+                <th>Registered</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in recent_patients %}
+                <tr>
+                  <td>
+                    <strong>{{ p.full_name }}</strong><br>
+                    <small style="color:var(--text-secondary);">{{ p.email }}</small>
+                  </td>
+                  <td>{{ p.phone }}</td>
+                  <td><small>{{ p.created_at|date_fmt }}</small></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Active Medical Specialists Roster -->
+<div class="card" style="margin-top:var(--space-6);">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">&#9877; Medical Staff & Doctors Roster</h3>
+      <p class="page-subtitle">Board-certified clinical specialists currently active in the hospital system</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="{{ url_for('admin.doctors') }}" class="btn btn-outline btn-sm">Manage All Doctors</a>
+      <a href="{{ url_for('auth.register', role='doctor') }}" class="btn btn-primary btn-sm">+ Add Doctor</a>
+    </div>
+  </div>
+  <div class="table-responsive">
+    {% if doctors_roster %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Doctor Name</th>
+            <th>Department</th>
+            <th>Specialization</th>
+            <th>Qualifications</th>
+            <th>Experience</th>
+            <th>Consultation Fee</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for doc in doctors_roster %}
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:34px;height:34px;border-radius:50%;background:#EFF6FF;color:var(--primary-blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">
+                    {{ doc.full_name[4:5] if doc.full_name|length > 4 else doc.full_name[0:1] }}
+                  </div>
+                  <div>
+                    <strong>{{ doc.full_name }}</strong>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-info">{{ doc.department_name }}</span></td>
+              <td>{{ doc.specialization }}</td>
+              <td><small style="color:var(--text-secondary);">{{ doc.qualification }}</small></td>
+              <td>{{ doc.years_experience }} Yrs</td>
+              <td><strong>{{ doc.consultation_fee|currency_fmt }}</strong></td>
+              <td><span class="badge badge-success">Active</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">&#9877;</div>
+        <div class="empty-title">No doctors found</div>
+        <p class="empty-text">No doctors are currently registered in the database.</p>
+        <a href="{{ url_for('auth.register', role='doctor') }}" class="btn btn-primary btn-sm">Register First Doctor</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

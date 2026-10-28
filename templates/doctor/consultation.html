@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Clinical Consultation — {{ appointment.patient_name }}{% endblock %}
+{% block breadcrumb %}Consultation Room{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Patient Clinical Consultation</h1>
+    <p class="page-subtitle">Examine patient, document diagnosis in EHR, and issue digital prescriptions</p>
+  </div>
+  <a href="{{ url_for('doctor.appointments') }}" class="btn btn-outline">
+    &larr; Back to Roster
+  </a>
+</div>
+
+<!-- Patient Header Card -->
+<div class="card" style="background:#F8FAFC;margin-bottom:var(--space-6);">
+  <div class="card-body">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+      <div>
+        <small style="color:var(--text-secondary);text-transform:uppercase;font-size:0.7rem;font-weight:600;">Patient Profile</small>
+        <h2 style="font-size:var(--font-size-xl);color:var(--text-primary);margin-top:2px;">{{ appointment.patient_name }}</h2>
+        <div style="font-size:var(--font-size-xs);color:var(--text-secondary);">
+          {{ appointment.gender }} &bull; DOB: {{ appointment.date_of_birth|date_fmt }} &bull; Phone: {{ appointment.phone }}
+        </div>
+      </div>
+      <div>
+        <small style="color:var(--text-secondary);text-transform:uppercase;font-size:0.7rem;font-weight:600;">Emergency Contact</small>
+        <div style="font-size:var(--font-size-sm);font-weight:600;color:var(--text-primary);">
+          {{ appointment.emergency_contact or 'None on file' }}
+        </div>
+      </div>
+      <div>
+        <small style="color:var(--text-secondary);text-transform:uppercase;font-size:0.7rem;font-weight:600;">Visit Schedule</small>
+        <div style="font-size:var(--font-size-sm);font-weight:600;color:var(--primary-blue);">
+          {{ appointment.appointment_date|date_fmt }} at {{ appointment.start_time|time_fmt }}
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-color);font-size:var(--font-size-xs);color:var(--text-secondary);">
+      <strong>Chief Complaint Reported:</strong> {{ appointment.reason }}
+    </div>
+  </div>
+</div>
+
+<div class="grid-3">
+  <!-- Clinical Form (2 Cols) -->
+  <div class="card" style="grid-column: span 2;">
+    <div class="card-header">
+      <h3 class="card-title">Electronic Health Record (EHR) Documentation</h3>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('doctor.consultation', appointment_id=appointment.appointment_id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="form-group">
+          <label class="form-label" for="symptoms">1. Observed Symptoms & Clinical Signs *</label>
+          <textarea id="symptoms" name="symptoms" class="form-control" rows="3" placeholder="Document patient reported symptoms, onset, vitals (BP, HR, Temp)..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="diagnosis">2. Clinical Diagnosis *</label>
+          <input type="text" id="diagnosis" name="diagnosis" class="form-control" placeholder="Primary diagnosis (e.g. Essential Hypertension, Acute Bronchitis)..." required>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="allergies">Known Drug / Environmental Allergies</label>
+            <input type="text" id="allergies" name="allergies" class="form-control" placeholder="e.g. Penicillin, Sulfa, None known">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="follow_up_date">Recommended Follow-up Date</label>
+            <input type="date" id="follow_up_date" name="follow_up_date" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="treatment_notes">Clinical Notes & Non-Pharmacological Advice</label>
+          <textarea id="treatment_notes" name="treatment_notes" class="form-control" rows="3" placeholder="Dietary instructions, physical therapy, imaging referrals..."></textarea>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border-color);margin:24px 0;">
+
+        <!-- Prescription Section -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div>
+            <h4 style="font-size:var(--font-size-base);font-weight:700;color:var(--text-primary);">&#128138; Prescription & Medications</h4>
+            <div class="form-text">Prescribed medications will be linked atomically to this visit.</div>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" id="addMedicationBtn">
+            + Add Another Drug
+          </button>
+        </div>
+
+        <div id="medicationList">
+          <!-- Drug Item Template -->
+          <div class="med-item-card" style="background:#F8FAFC;border:1px solid var(--border-color);border-radius:var(--radius-md);padding:14px;margin-bottom:12px;">
+            <div class="grid-3" style="margin-bottom:8px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Medication Name</label>
+                <input type="text" name="med_name[]" class="form-control" placeholder="e.g. Amoxicillin">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Dosage</label>
+                <input type="text" name="med_dosage[]" class="form-control" placeholder="e.g. 500 mg">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Frequency</label>
+                <input type="text" name="med_freq[]" class="form-control" placeholder="e.g. Twice daily">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Duration</label>
+                <input type="text" name="med_duration[]" class="form-control" placeholder="e.g. 7 days">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Special Directives</label>
+                <input type="text" name="med_instructions[]" class="form-control" placeholder="e.g. Take with food">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:16px;">
+          <label class="form-label" for="instructions">General Prescription Instructions</label>
+          <textarea id="instructions" name="instructions" class="form-control" rows="2" placeholder="Overall administration guidelines, hydration advice, hydration..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:20px;">
+          Complete Consultation & Commit Record
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Historical Patient Records Sidebar (1 Col) -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Prior Medical History</h3>
+    </div>
+    <div class="card-body">
+      {% if patient_history %}
+        <ul style="list-style:none;padding:0;">
+          {% for h in patient_history %}
+            <li style="padding:12px 0;border-bottom:1px solid var(--border-color);">
+              <small style="color:var(--text-muted);font-weight:600;">{{ h.visit_date|date_fmt }}</small>
+              <div style="font-weight:600;color:var(--text-primary);margin-top:2px;">{{ h.diagnosis }}</div>
+              <div style="font-size:var(--font-size-xs);color:var(--text-secondary);margin-top:4px;">{{ h.symptoms|truncate(60) }}</div>
+              <a href="{{ url_for('medical_records.detail', record_id=h.record_id) }}" target="_blank" style="font-size:0.75rem;margin-top:4px;display:inline-block;">
+                View Record &rarr;
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:var(--font-size-xs);">
+          No previous consultations found on record for this patient.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const addBtn = document.getElementById("addMedicationBtn");
+  const list = document.getElementById("medicationList");
+
+  if (addBtn && list) {
+    addBtn.addEventListener("click", function() {
+      const card = document.createElement("div");
+      card.className = "med-item-card";
+      card.style = "background:#F8FAFC;border:1px solid var(--border-color);border-radius:var(--radius-md);padding:14px;margin-bottom:12px;";
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <strong style="font-size:0.75rem;color:var(--text-secondary);">ADDITIONAL MEDICATION</strong>
+          <button type="button" onclick="this.closest('.med-item-card').remove();" style="border:none;background:none;color:var(--error);cursor:pointer;font-size:0.75rem;">Remove</button>
+        </div>
+        <div class="grid-3" style="margin-bottom:8px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Medication Name</label>
+            <input type="text" name="med_name[]" class="form-control" placeholder="Drug Name">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Dosage</label>
+            <input type="text" name="med_dosage[]" class="form-control" placeholder="e.g. 10 mg">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Frequency</label>
+            <input type="text" name="med_freq[]" class="form-control" placeholder="e.g. Once daily">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Duration</label>
+            <input type="text" name="med_duration[]" class="form-control" placeholder="e.g. 14 days">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Instructions</label>
+            <input type="text" name="med_instructions[]" class="form-control" placeholder="e.g. At bedtime">
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+});
+</script>
+{% endblock %}

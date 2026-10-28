@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Hospital Analytics & Reports — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Analytics & Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Hospital Analytics & Clinical Intelligence</h1>
+    <p class="page-subtitle">Real database aggregations across departmental workloads, clinician performance, and diagnoses</p>
+  </div>
+  <button onclick="window.print();" class="btn btn-outline">
+    &#128424; Export Report
+  </button>
+</div>
+
+<!-- Departmental Workload & Financial Breakdown -->
+<div class="card" style="margin-bottom:var(--space-8);">
+  <div class="card-header">
+    <h3 class="card-title">Department Clinical Workload & Revenue Performance</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Department</th>
+          <th>Staff Clinicians</th>
+          <th>Total Consultations</th>
+          <th>Total Billed</th>
+          <th>Total Collected</th>
+          <th>Collection Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dept in dept_reports %}
+          <tr>
+            <td><strong>{{ dept.department_name }}</strong></td>
+            <td><span class="badge badge-neutral">{{ dept.doctor_count }}</span></td>
+            <td><strong>{{ dept.total_appointments }}</strong> visits</td>
+            <td>{{ dept.total_billed|currency_fmt }}</td>
+            <td style="color:var(--success);font-weight:600;">{{ dept.total_collected|currency_fmt }}</td>
+            <td>
+              {% if dept.total_billed > 0 %}
+                <span class="badge badge-info">{{ ((dept.total_collected / dept.total_billed) * 100)|int }}%</span>
+              {% else %}
+                <span class="badge badge-neutral">&mdash;</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Doctor Performance / Workload -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Physician Consultation Volume</h3>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Doctor</th>
+            <th>Department</th>
+            <th>Completed</th>
+            <th>Cancelled</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for doc in doctor_workload %}
+            <tr>
+              <td>
+                <strong>{{ doc.full_name }}</strong><br>
+                <small style="color:var(--text-secondary);">{{ doc.specialization }}</small>
+              </td>
+              <td>{{ doc.department_name }}</td>
+              <td><span class="badge badge-success">{{ doc.completed_count }}</span></td>
+              <td>
+                {% if doc.cancelled_count > 0 %}
+                  <span class="badge badge-danger">{{ doc.cancelled_count }}</span>
+                {% else %}
+                  <span class="badge badge-neutral">0</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Common Clinical Diagnoses -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Top Documented Diagnoses (EHR Data)</h3>
+    </div>
+    <div class="card-body">
+      {% if top_diagnoses %}
+        <ul style="list-style:none;padding:0;">
+          {% for diag in top_diagnoses %}
+            <li style="padding:12px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <strong style="color:var(--text-primary);font-size:var(--font-size-sm);">{{ diag.diagnosis }}</strong>
+              </div>
+              <span class="badge badge-info">{{ diag.case_count }} Case{% if diag.case_count > 1 %}s{% endif %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:var(--font-size-xs);">
+          No diagnoses recorded yet in medical records.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

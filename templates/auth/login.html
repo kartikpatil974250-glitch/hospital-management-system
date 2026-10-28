@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — PulseCare HMS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <!-- Visual Branding Left Panel -->
+  <div class="auth-panel-visual">
+    <div class="brand-header" style="display:flex;align-items:center;gap:12px;">
+      <div class="brand-icon">+</div>
+      <h2 style="color:white;font-size:1.25rem;font-weight:700;">PulseCare Health</h2>
+    </div>
+
+    <div class="auth-visual-content">
+      <h1>Modern Healthcare Management Platform</h1>
+      <p>Seamless clinical appointments, real-time doctor availability, unified electronic medical records, and instantaneous billing ledger.</p>
+      
+      <div style="margin-top:32px;padding:16px;background:rgba(255,255,255,0.1);border-radius:12px;backdrop-filter:blur(8px);">
+        <h4 style="font-size:0.875rem;font-weight:600;margin-bottom:8px;">Demo Evaluation Logins:</h4>
+        <div style="font-size:0.8rem;line-height:1.6;color:#E2E8F0;">
+          <strong>Admin:</strong> admin@pulsecare.com / Admin@123<br>
+          <strong>Doctor:</strong> sarah.jenkins@pulsecare.com / Doctor@123<br>
+          <strong>Patient:</strong> john.doe@example.com / Patient@123
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:0.75rem;color:#94A3B8;">
+      &copy; {{ current_year }} PulseCare Hospital Management System. All rights reserved.
+    </div>
+  </div>
+
+  <!-- Sign In Form Right Panel -->
+  <div class="auth-panel-form">
+    <div class="auth-form-card">
+      <div class="auth-header">
+        <h2>Welcome back</h2>
+        <p>Sign in to your clinical or patient account</p>
+      </div>
+
+      <!-- Alerts -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="form-group">
+          <label class="form-label">Select Account Role</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+            <label style="display:block;border:1px solid var(--border-color);padding:8px;border-radius:8px;text-align:center;cursor:pointer;">
+              <input type="radio" name="role" value="patient" {% if selected_role != 'doctor' and selected_role != 'admin' %}checked{% endif %}> Patient
+            </label>
+            <label style="display:block;border:1px solid var(--border-color);padding:8px;border-radius:8px;text-align:center;cursor:pointer;">
+              <input type="radio" name="role" value="doctor" {% if selected_role == 'doctor' %}checked{% endif %}> Doctor
+            </label>
+            <label style="display:block;border:1px solid var(--border-color);padding:8px;border-radius:8px;text-align:center;cursor:pointer;">
+              <input type="radio" name="role" value="admin" {% if selected_role == 'admin' %}checked{% endif %}> Admin
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input type="email" id="email" name="email" class="form-control" placeholder="name@example.com" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <label class="form-label" for="password" style="margin-bottom:0;">Password</label>
+            <button type="button" class="toggle-password btn-sm btn-outline" data-target="#password">Show</button>
+          </div>
+          <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:16px;">
+          Sign In to Portal
+        </button>
+
+        <div style="text-align:center;margin-top:24px;font-size:var(--font-size-xs);color:var(--text-secondary);line-height:1.8;">
+          New user? 
+          <a href="{{ url_for('auth.register', role='patient') }}" style="font-weight:600;margin:0 4px;">Register as Patient</a> | 
+          <a href="{{ url_for('auth.register', role='doctor') }}" style="font-weight:600;margin:0 4px;color:var(--secondary-teal);">Register as Doctor</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Consultations — PulseCare HMS{% endblock %}
+{% block breadcrumb %}My Consultations{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Assigned Consultations</h1>
+    <p class="page-subtitle">Track patient attendance, access medical charts, and record diagnoses</p>
+  </div>
+</div>
+
+<!-- Status Filter Tabs -->
+<div style="display:flex;gap:8px;margin-bottom:var(--space-6);flex-wrap:wrap;">
+  <a href="{{ url_for('doctor.appointments') }}" class="btn btn-sm {% if not current_status %}btn-primary{% else %}btn-outline{% endif %}">
+    All Consultations
+  </a>
+  <a href="{{ url_for('doctor.appointments', status='Confirmed') }}" class="btn btn-sm {% if current_status == 'Confirmed' %}btn-primary{% else %}btn-outline{% endif %}">
+    Confirmed
+  </a>
+  <a href="{{ url_for('doctor.appointments', status='Completed') }}" class="btn btn-sm {% if current_status == 'Completed' %}btn-primary{% else %}btn-outline{% endif %}">
+    Completed
+  </a>
+  <a href="{{ url_for('doctor.appointments', status='Cancelled') }}" class="btn btn-sm {% if current_status == 'Cancelled' %}btn-primary{% else %}btn-outline{% endif %}">
+    Cancelled
+  </a>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    {% if appointments %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Ref #</th>
+            <th>Date & Time</th>
+            <th>Patient Details</th>
+            <th>Chief Complaint</th>
+            <th>Status</th>
+            <th>Clinical Record</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in appointments %}
+            <tr>
+              <td><strong>#{{ app.appointment_id }}</strong></td>
+              <td>
+                <strong>{{ app.appointment_date|date_fmt }}</strong><br>
+                <small style="color:var(--text-secondary);">{{ app.start_time|time_fmt }} - {{ app.end_time|time_fmt }}</small>
+              </td>
+              <td>
+                <strong>{{ app.patient_name }}</strong><br>
+                <small style="color:var(--text-secondary);">{{ app.gender }}, {{ app.date_of_birth|date_fmt }} &bull; {{ app.phone }}</small>
+              </td>
+              <td style="max-width:220px;">
+                {{ app.reason }}
+                {% if app.cancellation_reason %}
+                  <div style="font-size:0.75rem;color:var(--error);margin-top:2px;">Reason: {{ app.cancellation_reason }}</div>
+                {% endif %}
+              </td>
+              <td>
+                {% if app.status == 'Completed' %}
+                  <span class="badge badge-success">Completed</span>
+                {% elif app.status in ('Scheduled', 'Confirmed') %}
+                  <span class="badge badge-info">{{ app.status }}</span>
+                {% elif app.status == 'Cancelled' %}
+                  <span class="badge badge-danger">Cancelled</span>
+                {% else %}
+                  <span class="badge badge-neutral">{{ app.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if app.record_id %}
+                  <a href="{{ url_for('medical_records.detail', record_id=app.record_id) }}" class="badge badge-success">
+                    Record #{{ app.record_id }} &rarr;
+                  </a>
+                {% else %}
+                  <span style="color:var(--text-muted);font-size:var(--font-size-xs);">Pending Exam</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  {% if app.status != 'Cancelled' %}
+                    <a href="{{ url_for('doctor.consultation', appointment_id=app.appointment_id) }}" class="btn btn-primary btn-sm">
+                      Consult &rarr;
+                    </a>
+                  {% endif %}
+                  {% if app.status in ('Scheduled', 'Confirmed') %}
+                    <form method="POST" action="{{ url_for('doctor.mark_no_show', appointment_id=app.appointment_id) }}" onsubmit="return confirm('Mark patient as No-show?');" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                      <button type="submit" class="btn btn-outline btn-sm" style="color:var(--warning);">No-show</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('appointments.cancel', appointment_id=app.appointment_id) }}" onsubmit="return confirm('Cancel this consultation?');" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                      <input type="hidden" name="cancellation_reason" value="Cancelled by doctor">
+                      <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">&#128197;</div>
+        <div class="empty-title">No consultations found</div>
+        <p class="empty-text">No appointments match the selected filter criteria.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

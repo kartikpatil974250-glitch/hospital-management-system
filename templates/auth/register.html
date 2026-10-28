@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Registration — PulseCare HMS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+  <style>
+    .role-switcher {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: #F1F5F9;
+      padding: 4px;
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-4);
+    }
+    .role-tab-btn {
+      padding: 10px 16px;
+      text-align: center;
+      font-weight: 600;
+      font-size: var(--font-size-sm);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      transition: var(--transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .role-tab-btn.active {
+      background: #FFFFFF;
+      color: var(--primary-blue);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <!-- Visual Branding Left Panel -->
+  <div class="auth-panel-visual">
+    <div class="brand-header" style="display:flex;align-items:center;gap:12px;">
+      <div class="brand-icon">+</div>
+      <h2 style="color:white;font-size:1.25rem;font-weight:700;">PulseCare Health</h2>
+    </div>
+
+    <div class="auth-visual-content">
+      <h1 id="panel-headline">Join PulseCare Healthcare</h1>
+      <p id="panel-desc">Register as a patient to schedule appointments with specialists, or join our medical staff as an authorized clinician to manage outpatient queues and digital prescriptions.</p>
+      
+      <div style="margin-top:24px;padding:16px;background:rgba(255,255,255,0.12);border-radius:12px;backdrop-filter:blur(8px);">
+        <div style="font-size:0.85rem;color:#E2E8F0;line-height:1.6;">
+          &#10003; <strong>Instant Portal Access</strong> with secure session encryption<br>
+          &#10003; <strong>Multi-Department Network:</strong> Cardiology, Neurology, Pediatrics, Orthopedics, and more<br>
+          &#10003; <strong>Automated Schedule Setup</strong> for practicing clinicians
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:0.75rem;color:#94A3B8;">
+      &copy; {{ current_year }} PulseCare Hospital Management System. All rights reserved.
+    </div>
+  </div>
+
+  <!-- Registration Form Right Panel -->
+  <div class="auth-panel-form" style="width: 580px; max-width: 95vw;">
+    <div class="auth-form-card" style="padding: 32px 36px;">
+      <div class="auth-header" style="margin-bottom: var(--space-4);">
+        <h2 id="form-heading">Create Account</h2>
+        <p id="form-subheading">Select your role and complete your healthcare credentials</p>
+      </div>
+
+      <!-- Role Selector Tabs -->
+      <div class="role-switcher">
+        <button type="button" class="role-tab-btn {% if default_role != 'doctor' %}active{% endif %}" id="btn-role-patient" onclick="switchRole('patient')">
+          &#128100; Patient Account
+        </button>
+        <button type="button" class="role-tab-btn {% if default_role == 'doctor' %}active{% endif %}" id="btn-role-doctor" onclick="switchRole('doctor')">
+          &#9877; Doctor / Clinician
+        </button>
+      </div>
+
+      <!-- Alerts -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('auth.register') }}" id="reg-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="role" id="role-input" value="{{ default_role or 'patient' }}">
+
+        <!-- Common Name Field -->
+        <div class="form-group">
+          <label class="form-label" for="full_name" id="label-name">Full Legal Name *</label>
+          <input type="text" id="full_name" name="full_name" class="form-control" placeholder="e.g. John Doe" required>
+        </div>
+
+        <!-- Common Contact Fields -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="email">Email Address *</label>
+            <input type="email" id="email" name="email" class="form-control" placeholder="name@example.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="phone">Phone Number *</label>
+            <input type="tel" id="phone" name="phone" class="form-control" placeholder="+1-555-0100" required>
+          </div>
+        </div>
+
+        <!-- PATIENT SPECIFIC SECTION -->
+        <div id="patient-fields" style="{% if default_role == 'doctor' %}display:none;{% endif %}">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="date_of_birth">Date of Birth *</label>
+              <input type="date" id="date_of_birth" name="date_of_birth" class="form-control" {% if default_role != 'doctor' %}required{% endif %}>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="gender">Gender *</label>
+              <select id="gender" name="gender" class="form-control" {% if default_role != 'doctor' %}required{% endif %}>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="address">Residential Address</label>
+            <textarea id="address" name="address" class="form-control" rows="2" placeholder="Street, City, State, ZIP"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="emergency_contact">Emergency Contact (Name & Phone)</label>
+            <input type="text" id="emergency_contact" name="emergency_contact" class="form-control" placeholder="e.g. Jane Doe (+1-555-0999)">
+          </div>
+        </div>
+
+        <!-- DOCTOR SPECIFIC SECTION -->
+        <div id="doctor-fields" style="{% if default_role != 'doctor' %}display:none;{% endif %}">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="department_id">Department *</label>
+              <select id="department_id" name="department_id" class="form-control" {% if default_role == 'doctor' %}required{% endif %}>
+                <option value="">Select Clinical Department</option>
+                {% for dept in departments %}
+                  <option value="{{ dept.department_id }}">{{ dept.department_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="specialization">Medical Specialization *</label>
+              <input type="text" id="specialization" name="specialization" class="form-control" placeholder="e.g. Interventional Cardiologist" {% if default_role == 'doctor' %}required{% endif %}>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="qualification">Qualifications / Degrees *</label>
+              <input type="text" id="qualification" name="qualification" class="form-control" placeholder="e.g. MD, FACC, MBBS" {% if default_role == 'doctor' %}required{% endif %}>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="years_experience">Years of Experience</label>
+              <input type="number" id="years_experience" name="years_experience" class="form-control" min="0" max="60" value="5">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="consultation_fee">Standard Consultation Fee ($ USD) *</label>
+            <input type="number" id="consultation_fee" name="consultation_fee" class="form-control" step="5.00" min="10" max="1000" value="75.00" {% if default_role == 'doctor' %}required{% endif %}>
+            <small style="color:var(--text-secondary);font-size:0.75rem;">Standard weekday schedule (Mon–Fri, 9:00 AM – 5:00 PM) will be automatically assigned.</small>
+          </div>
+        </div>
+
+        <!-- Common Password Fields -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="password">Password *</label>
+            <input type="password" id="password" name="password" class="form-control" minlength="6" placeholder="Min 6 characters" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="confirm_password">Confirm Password *</label>
+            <input type="password" id="confirm_password" name="confirm_password" class="form-control" minlength="6" placeholder="Re-type password" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" style="width:100%;margin-top:8px;">
+          {% if default_role == 'doctor' %}Complete Doctor Registration{% else %}Complete Patient Registration{% endif %}
+        </button>
+
+        <div style="text-align:center;margin-top:20px;font-size:var(--font-size-xs);color:var(--text-secondary);">
+          Already have an account? 
+          <a href="{{ url_for('auth.login') }}" style="font-weight:600;">Sign in here</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchRole(role) {
+  const isDoctor = (role === 'doctor');
+  document.getElementById('role-input').value = role;
+  
+  // Tab UI active state
+  document.getElementById('btn-role-patient').classList.toggle('active', !isDoctor);
+  document.getElementById('btn-role-doctor').classList.toggle('active', isDoctor);
+
+  // Toggle field blocks
+  document.getElementById('patient-fields').style.display = isDoctor ? 'none' : 'block';
+  document.getElementById('doctor-fields').style.display = isDoctor ? 'block' : 'none';
+
+  // Update dynamic labels & placeholders
+  document.getElementById('form-heading').innerText = isDoctor ? 'Register Doctor Account' : 'Create Patient Account';
+  document.getElementById('form-subheading').innerText = isDoctor ? 'Register your clinician credentials to manage consultations' : 'Enter your details to create your patient healthcare profile';
+  document.getElementById('label-name').innerText = isDoctor ? 'Doctor Full Name (with Title) *' : 'Full Legal Name *';
+  document.getElementById('full_name').placeholder = isDoctor ? 'e.g. Dr. Alexander Hayes' : 'e.g. John Doe';
+  document.getElementById('submit-btn').innerText = isDoctor ? 'Complete Doctor Registration' : 'Complete Patient Registration';
+
+  // Toggle required attributes to prevent form submission blocking on hidden inputs
+  const dob = document.getElementById('date_of_birth');
+  const gender = document.getElementById('gender');
+  const dept = document.getElementById('department_id');
+  const spec = document.getElementById('specialization');
+  const qual = document.getElementById('qualification');
+  const fee = document.getElementById('consultation_fee');
+
+  if (dob) dob.required = !isDoctor;
+  if (gender) gender.required = !isDoctor;
+  if (dept) dept.required = isDoctor;
+  if (spec) spec.required = isDoctor;
+  if (qual) qual.required = isDoctor;
+  if (fee) fee.required = isDoctor;
+}
+</script>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

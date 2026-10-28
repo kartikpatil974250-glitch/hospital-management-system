@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}My Invoices & Bills — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Invoices & Payments{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Billing & Payment Ledger</h1>
+    <p class="page-subtitle">Itemized invoices, consultation fees, and simulated payment settlements</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    {% if bills %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Date</th>
+            <th>Consultation With</th>
+            <th>Total Amount</th>
+            <th>Amount Paid</th>
+            <th>Balance Due</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in bills %}
+            <tr>
+              <td><strong>#INV-{{ b.bill_id }}</strong></td>
+              <td>{{ b.created_at|date_fmt }}</td>
+              <td>
+                <strong>{{ b.doctor_name }}</strong><br>
+                <small style="color:var(--text-secondary);">{{ b.department_name }}</small>
+              </td>
+              <td><strong>{{ b.total_amount|currency_fmt }}</strong></td>
+              <td>{{ b.amount_paid|currency_fmt }}</td>
+              <td>
+                <strong style="color:{% if b.balance > 0 %}var(--error){% else %}var(--success){% endif %};">
+                  {{ b.balance|currency_fmt }}
+                </strong>
+              </td>
+              <td>
+                {% if b.payment_status == 'Paid' %}
+                  <span class="badge badge-success">Paid</span>
+                {% elif b.payment_status == 'Partially Paid' %}
+                  <span class="badge badge-warning">Partially Paid</span>
+                {% else %}
+                  <span class="badge badge-danger">Unpaid</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <a href="{{ url_for('billing.detail', bill_id=b.bill_id) }}" class="btn btn-outline btn-sm">
+                    View Invoice
+                  </a>
+                  {% if b.balance > 0 %}
+                    <a href="{{ url_for('billing.detail', bill_id=b.bill_id) }}#paymentSection" class="btn btn-primary btn-sm">
+                      Pay Now
+                    </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">&#128179;</div>
+        <div class="empty-title">No billing records found</div>
+        <p class="empty-text">Invoices generated for clinical consultations will be listed here.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

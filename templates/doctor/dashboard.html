@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Clinical Dashboard — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Clinical Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Doctor Consultation Dashboard</h1>
+    <p class="page-subtitle">Manage today's clinical appointments, review patient records, and update prescriptions</p>
+  </div>
+  <a href="{{ url_for('doctor.schedule') }}" class="btn btn-outline">
+    Manage Clinic Hours
+  </a>
+</div>
+
+<!-- Aggregated Clinical Stats -->
+<div class="grid-4" style="margin-bottom: var(--space-8);">
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Today's Appointments</div>
+      <div class="stat-value">{{ stats.today_appointments or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-blue">&#128197;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Upcoming (Next 7d)</div>
+      <div class="stat-value">{{ stats.upcoming_appointments or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-teal">&#128197;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Completed Consultations</div>
+      <div class="stat-value">{{ stats.completed_consultations or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-green">&#10003;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Total Treated Patients</div>
+      <div class="stat-value">{{ stats.total_unique_patients or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-amber">&#128100;</div>
+  </div>
+</div>
+
+<!-- Today's Consultations Queue -->
+<div class="card" style="margin-bottom: var(--space-8);">
+  <div class="card-header">
+    <h3 class="card-title">Today's In-Clinic Appointment Schedule</h3>
+    <span class="badge badge-info">{{ today_appointments|length }} Patients Scheduled</span>
+  </div>
+  <div class="table-responsive">
+    {% if today_appointments %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Patient Name</th>
+            <th>Demographics</th>
+            <th>Phone</th>
+            <th>Reason for Visit</th>
+            <th>Status</th>
+            <th>Clinical Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in today_appointments %}
+            <tr>
+              <td><strong>{{ app.start_time|time_fmt }}</strong> - {{ app.end_time|time_fmt }}</td>
+              <td><strong>{{ app.patient_name }}</strong></td>
+              <td>{{ app.gender }}, {{ app.date_of_birth|date_fmt }}</td>
+              <td>{{ app.phone }}</td>
+              <td style="max-width:200px;">{{ app.reason }}</td>
+              <td>
+                {% if app.status == 'Completed' %}
+                  <span class="badge badge-success">Completed</span>
+                {% elif app.status in ('Scheduled', 'Confirmed') %}
+                  <span class="badge badge-info">{{ app.status }}</span>
+                {% elif app.status == 'Cancelled' %}
+                  <span class="badge badge-danger">Cancelled</span>
+                {% else %}
+                  <span class="badge badge-neutral">{{ app.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if app.status != 'Cancelled' %}
+                  <a href="{{ url_for('doctor.consultation', appointment_id=app.appointment_id) }}" class="btn btn-primary btn-sm">
+                    Open Consultation &rarr;
+                  </a>
+                {% else %}
+                  <span style="color:var(--text-muted);font-size:var(--font-size-xs);">Cancelled</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">&#128197;</div>
+        <div class="empty-title">No appointments scheduled for today</div>
+        <p class="empty-text">Your consultation queue for today is currently clear.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

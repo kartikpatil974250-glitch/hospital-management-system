@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Appointment Confirmed — #{{ appointment.appointment_id }}{% endblock %}
+{% block breadcrumb %}Booking Confirmation{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 760px; margin: 0 auto;">
+  <div class="card-body" style="text-align: center; padding: var(--space-8);">
+    <div style="width: 64px; height: 64px; border-radius: var(--radius-full); background: var(--success-light); color: var(--success); display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 16px;">
+      &#10003;
+    </div>
+    <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">
+      Appointment Confirmed!
+    </h1>
+    <p style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: 24px;">
+      Your consultation has been reserved and registered in the hospital database. Reference: <strong>#APP-{{ appointment.appointment_id }}</strong>
+    </p>
+
+    <!-- Appointment Receipt Details Box -->
+    <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-lg); text-align: left; padding: 24px; margin-bottom: 24px;">
+      <div class="grid-2">
+        <div style="margin-bottom: 16px;">
+          <small style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">Attending Physician</small>
+          <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-top: 2px;">{{ appointment.doctor_name }}</div>
+          <div style="font-size: 0.85rem; color: var(--secondary-teal);">{{ appointment.doctor_specialization }}</div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <small style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">Department & Location</small>
+          <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-top: 2px;">{{ appointment.department_name }}</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">{{ appointment.department_location }}</div>
+        </div>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--border-color); margin: 12px 0 20px 0;">
+
+      <div class="grid-2">
+        <div>
+          <small style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">Date & Time</small>
+          <div style="font-weight: 600; color: var(--text-primary); margin-top: 2px;">
+            &#128197; {{ appointment.appointment_date|date_fmt }} at {{ appointment.start_time|time_fmt }}
+          </div>
+        </div>
+
+        <div>
+          <small style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">Patient</small>
+          <div style="font-weight: 600; color: var(--text-primary); margin-top: 2px;">
+            {{ appointment.patient_name }} ({{ appointment.patient_phone }})
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <small style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">Reason for Visit</small>
+        <div style="font-size: 0.9rem; color: var(--text-primary); margin-top: 2px;">
+          {{ appointment.reason }}
+        </div>
+      </div>
+
+      {% if appointment.bill_id %}
+      <div style="margin-top: 20px; padding: 12px 16px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong style="color: var(--text-primary);">Consultation Fee:</strong> 
+          <span style="color: var(--primary-blue); font-size: 1.1rem; font-weight: 700;">{{ appointment.consultation_fee|currency_fmt }}</span>
+        </div>
+        <div>
+          <span class="badge {% if appointment.bill_status == 'Paid' %}badge-success{% else %}badge-warning{% endif %}">
+            Status: {{ appointment.bill_status or 'Unpaid' }}
+          </span>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+      {% if appointment.bill_id and appointment.bill_status != 'Paid' %}
+        <a href="{{ url_for('billing.detail', bill_id=appointment.bill_id) }}" class="btn btn-primary">
+          Proceed to Settle Invoice &rarr;
+        </a>
+      {% endif %}
+      <button onclick="window.print();" class="btn btn-outline">
+        &#128424; Print Confirmation Slip
+      </button>
+      {% if current_user.role == 'patient' %}
+        <a href="{{ url_for('patient.appointments') }}" class="btn btn-outline">
+          Return to My Appointments
+        </a>
+      {% else %}
+        <a href="{{ url_for('admin.appointments') }}" class="btn btn-outline">
+          Back to Appointment Roster
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

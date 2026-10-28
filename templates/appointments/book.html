@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Book Consultation — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Schedule Appointment{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Schedule Doctor Consultation</h1>
+    <p class="page-subtitle">Real-time availability validation with concurrency conflict prevention</p>
+  </div>
+</div>
+
+<!-- Wizard Step Indicator -->
+<div class="wizard-steps">
+  <div class="wizard-step active">
+    <div class="wizard-step-num">1</div>
+    <div class="wizard-step-title">Specialist</div>
+  </div>
+  <div class="wizard-step active">
+    <div class="wizard-step-num">2</div>
+    <div class="wizard-step-title">Date & Slot</div>
+  </div>
+  <div class="wizard-step active">
+    <div class="wizard-step-num">3</div>
+    <div class="wizard-step-title">Clinical Reason</div>
+  </div>
+  <div class="wizard-step">
+    <div class="wizard-step-num">4</div>
+    <div class="wizard-step-title">Confirmation</div>
+  </div>
+</div>
+
+<div class="grid-3">
+  <!-- Booking Form (2 Cols) -->
+  <div class="card" style="grid-column: span 2;">
+    <div class="card-header">
+      <h3 class="card-title">Appointment Specifications</h3>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('appointments.book') }}" id="appointmentForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="start_time" id="selectedStartTime" required>
+
+        <div class="grid-2">
+          <!-- Department Selector -->
+          <div class="form-group">
+            <label class="form-label" for="deptSelect">1. Select Department</label>
+            <select id="deptSelect" class="form-control">
+              <option value="">All Departments</option>
+              {% for dept in departments %}
+                <option value="{{ dept.department_id }}" {% if selected_dept_id == dept.department_id %}selected{% endif %}>
+                  {{ dept.department_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Doctor Selector -->
+          <div class="form-group">
+            <label class="form-label" for="doctorSelect">2. Choose Doctor *</label>
+            <select id="doctorSelect" name="doctor_id" class="form-control" required>
+              <option value="">Choose a Physician</option>
+              {% for doc in doctors %}
+                <option value="{{ doc.doctor_id }}" 
+                        data-dept-id="{{ doc.department_id }}" 
+                        data-fee="{{ doc.consultation_fee }}"
+                        {% if selected_doctor_id == doc.doctor_id %}selected{% endif %}>
+                  {{ doc.full_name }} — {{ doc.specialization }} ({{ doc.consultation_fee|currency_fmt }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Date Selector -->
+          <div class="form-group">
+            <label class="form-label" for="appointmentDate">3. Select Appointment Date *</label>
+            <input type="date" id="appointmentDate" name="appointment_date" class="form-control" min="{{ min_date }}" required>
+          </div>
+
+          <!-- Slot Status Indicator -->
+          <div class="form-group">
+            <label class="form-label">Slot Status Legend</label>
+            <div style="display:flex;gap:8px;align-items:center;padding:8px 0;font-size:var(--font-size-xs);">
+              <span class="badge badge-info">&#9632; Available</span>
+              <span class="badge badge-neutral" style="text-decoration:line-through;">&#9632; Booked</span>
+              <span class="badge badge-warning">&#9632; Doctor Leave</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Time Slots Container -->
+        <div class="form-group">
+          <label class="form-label">4. Select Available Time Slot *</label>
+          <div id="slotsContainer">
+            <div class="form-text">Choose a physician and date above to load available clinic consultation slots.</div>
+          </div>
+        </div>
+
+        <!-- Reason for Visit -->
+        <div class="form-group">
+          <label class="form-label" for="reason">5. Chief Complaint / Reason for Visit *</label>
+          <textarea id="reason" name="reason" class="form-control" rows="3" placeholder="Please describe primary symptoms or consultation purpose..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:16px;">
+          Confirm & Lock Appointment
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Summary Card (1 Col) -->
+  <div class="card" id="bookingSummary">
+    <div class="card-header">
+      <h3 class="card-title">Booking Summary</h3>
+    </div>
+    <div class="card-body">
+      <ul style="list-style:none;padding:0;font-size:var(--font-size-sm);line-height:2;">
+        <li style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-color);padding:8px 0;">
+          <span style="color:var(--text-secondary);">Selected Slot:</span>
+          <strong id="summarySlot">—</strong>
+        </li>
+        <li style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-color);padding:8px 0;">
+          <span style="color:var(--text-secondary);">Consultation Fee:</span>
+          <strong id="summaryFee" style="color:var(--primary-blue);font-size:var(--font-size-base);">$0.00</strong>
+        </li>
+        <li style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-color);padding:8px 0;">
+          <span style="color:var(--text-secondary);">Security:</span>
+          <span class="badge badge-success">Concurrency Locked</span>
+        </li>
+      </ul>
+
+      <div style="background:#F8FAFC;border:1px solid var(--border-color);border-radius:var(--radius-md);padding:14px;margin-top:20px;font-size:var(--font-size-xs);color:var(--text-secondary);line-height:1.5;">
+        <strong>Notice on High Demand:</strong><br>
+        Availability is checked dynamically and re-validated inside an ACID transaction with doctor row-locking immediately upon submission.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/appointments.js') }}"></script>
+{% endblock %}

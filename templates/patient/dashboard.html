@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Patient Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Welcome back, {{ current_user.name }}</h1>
+    <p class="page-subtitle">Your personal patient health portal and upcoming clinical appointments</p>
+  </div>
+  <a href="{{ url_for('appointments.book') }}" class="btn btn-primary btn-lg">
+    + Book New Appointment
+  </a>
+</div>
+
+<!-- Next Upcoming Appointment Banner -->
+{% if next_appointment %}
+<div class="card" style="border-left: 4px solid var(--primary-blue); background: linear-gradient(to right, #EFF6FF, #FFFFFF);">
+  <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+    <div>
+      <span class="badge badge-info" style="margin-bottom:8px;">Next Confirmed Consultation</span>
+      <h3 style="font-size:var(--font-size-xl);font-weight:700;color:var(--text-primary);margin-bottom:4px;">
+        {{ next_appointment.doctor_name }} ({{ next_appointment.specialization }})
+      </h3>
+      <div style="font-size:var(--font-size-sm);color:var(--text-secondary);">
+        &#128197; <strong>{{ next_appointment.appointment_date|date_fmt }}</strong> at <strong>{{ next_appointment.start_time|time_fmt }}</strong> &bull;
+        <span>{{ next_appointment.department_name }} ({{ next_appointment.location }})</span>
+      </div>
+      <div style="font-size:var(--font-size-xs);color:var(--text-muted);margin-top:4px;">
+        Reason: {{ next_appointment.reason }}
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="{{ url_for('appointments.confirmation', appointment_id=next_appointment.appointment_id) }}" class="btn btn-outline btn-sm">
+        View Details
+      </a>
+      <form method="POST" action="{{ url_for('appointments.cancel', appointment_id=next_appointment.appointment_id) }}" onsubmit="return confirm('Are you sure you wish to cancel this appointment?');" style="display:inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="cancellation_reason" value="Cancelled by patient via dashboard">
+        <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Quick Summary Metric Cards -->
+<div class="grid-3" style="margin-bottom:var(--space-8);">
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Recent Appointments</div>
+      <div class="stat-value">{{ recent_appointments|length }}</div>
+    </div>
+    <div class="stat-icon icon-blue">&#128197;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Outstanding Balance</div>
+      <div class="stat-value" style="color:{% if unpaid_summary.balance_due > 0 %}var(--error){% else %}var(--success){% endif %};">
+        {{ unpaid_summary.balance_due|currency_fmt }}
+      </div>
+    </div>
+    <div class="stat-icon icon-amber">&#128179;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Active Prescriptions</div>
+      <div class="stat-value">{{ recent_prescriptions|length }}</div>
+    </div>
+    <div class="stat-icon icon-teal">&#128138;</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Recent Appointments Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Recent Appointments</h3>
+      <a href="{{ url_for('patient.appointments') }}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="table-responsive">
+      {% if recent_appointments %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Doctor</th>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for app in recent_appointments %}
+              <tr>
+                <td>
+                  <strong>{{ app.doctor_name }}</strong><br>
+                  <small style="color:var(--text-muted);">{{ app.specialization }}</small>
+                </td>
+                <td>
+                  {{ app.appointment_date|date_fmt }}<br>
+                  <small style="color:var(--text-muted);">{{ app.start_time|time_fmt }}</small>
+                </td>
+                <td>
+                  {% if app.status == 'Completed' %}
+                    <span class="badge badge-success">Completed</span>
+                  {% elif app.status in ('Scheduled', 'Confirmed') %}
+                    <span class="badge badge-info">{{ app.status }}</span>
+                  {% elif app.status == 'Cancelled' %}
+                    <span class="badge badge-danger">Cancelled</span>
+                  {% else %}
+                    <span class="badge badge-neutral">{{ app.status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('appointments.confirmation', appointment_id=app.appointment_id) }}" class="btn btn-outline btn-sm">
+                    View
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">&#128197;</div>
+          <div class="empty-title">No appointments found</div>
+          <p class="empty-text">You haven't scheduled any doctor consultations yet.</p>
+          <a href="{{ url_for('appointments.book') }}" class="btn btn-primary btn-sm">Book Your First Appointment</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Prescriptions & Bills -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Recent Prescriptions & Medications</h3>
+      <a href="{{ url_for('patient.prescriptions') }}" class="btn btn-outline btn-sm">All Prescriptions</a>
+    </div>
+    <div class="card-body">
+      {% if recent_prescriptions %}
+        <ul style="list-style:none;padding:0;">
+          {% for rx in recent_prescriptions %}
+            <li style="padding:12px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <strong>Prescription from {{ rx.doctor_name }}</strong><br>
+                <small style="color:var(--text-secondary);">Issued on {{ rx.prescription_date|date_fmt }} &bull; {{ rx.item_count }} prescribed items</small>
+              </div>
+              <a href="{{ url_for('prescriptions.detail', prescription_id=rx.prescription_id) }}" class="btn btn-outline btn-sm">
+                View & Print Rx
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="empty-state" style="padding:var(--space-6);">
+          <div class="empty-icon">&#128138;</div>
+          <div class="empty-title">No prescriptions yet</div>
+          <p class="empty-text">Medications prescribed during completed consultations will appear here.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Available Hospital Doctors & Specialists -->
+<div class="card" style="margin-top:var(--space-8);">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">&#9877; Available Medical Specialists</h3>
+      <p class="page-subtitle">Schedule a consultation with our hospital physicians and specialists</p>
+    </div>
+    <a href="{{ url_for('patient.doctors') }}" class="btn btn-outline btn-sm">View All Doctors &rarr;</a>
+  </div>
+  <div class="card-body">
+    <div class="grid-3">
+      {% for doc in featured_doctors %}
+        <div class="doctor-card">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <div class="doctor-avatar-circle" style="margin-bottom:0;width:44px;height:44px;font-size:1.1rem;">
+              {{ doc.full_name[4:5] if doc.full_name|length > 4 else doc.full_name[0:1] }}
+            </div>
+            <div>
+              <h4 class="doctor-card-name" style="font-size:1rem;margin-bottom:2px;">{{ doc.full_name }}</h4>
+              <div class="doctor-card-spec" style="font-size:0.8rem;">{{ doc.specialization }}</div>
+            </div>
+          </div>
+          <ul class="doctor-meta-list" style="margin-bottom:14px;">
+            <li><span>Department:</span> <span class="val">{{ doc.department_name }}</span></li>
+            <li><span>Experience:</span> <span class="val">{{ doc.years_experience }} Years</span></li>
+            <li><span>Consultation Fee:</span> <span class="val" style="color:var(--primary-blue);font-weight:600;">{{ doc.consultation_fee|currency_fmt }}</span></li>
+          </ul>
+          <a href="{{ url_for('appointments.book', doctor_id=doc.doctor_id) }}" class="btn btn-primary btn-sm" style="width:100%;text-align:center;">
+            Book Appointment
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

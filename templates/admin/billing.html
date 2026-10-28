@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Hospital Revenue & Invoices — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Billing Administration{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Hospital Billing & Revenue Management</h1>
+    <p class="page-subtitle">Track hospital fees, collectable balances, and ledger settlements</p>
+  </div>
+</div>
+
+<!-- Financial Summary Cards -->
+<div class="grid-4" style="margin-bottom:var(--space-8);">
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Gross Billed</div>
+      <div class="stat-value">{{ summary.total_billed|currency_fmt }}</div>
+    </div>
+    <div class="stat-icon icon-blue">&#128179;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Collected Revenue</div>
+      <div class="stat-value" style="color:var(--success);">{{ summary.total_collected|currency_fmt }}</div>
+    </div>
+    <div class="stat-icon icon-green">&#10003;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Uncollected Balance</div>
+      <div class="stat-value" style="color:var(--error);">{{ summary.total_outstanding|currency_fmt }}</div>
+    </div>
+    <div class="stat-icon icon-red">&#9888;</div>
+  </div>
+
+  <div class="stat-card">
+    <div>
+      <div class="stat-title">Total Invoices</div>
+      <div class="stat-value">{{ summary.total_bills or 0 }}</div>
+    </div>
+    <div class="stat-icon icon-teal">&#128203;</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Hospital Invoices & Ledgers</h3>
+  </div>
+  <div class="table-responsive">
+    {% if bills %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Date</th>
+            <th>Patient</th>
+            <th>Physician</th>
+            <th>Total Amount</th>
+            <th>Paid</th>
+            <th>Balance Due</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in bills %}
+            <tr>
+              <td><strong>#INV-{{ b.bill_id }}</strong></td>
+              <td>{{ b.created_at|date_fmt }}</td>
+              <td>{{ b.patient_name }}</td>
+              <td>{{ b.doctor_name or 'Outpatient Care' }}</td>
+              <td><strong>{{ b.total_amount|currency_fmt }}</strong></td>
+              <td style="color:var(--success);">{{ b.amount_paid|currency_fmt }}</td>
+              <td>
+                <strong style="color:{% if b.balance > 0 %}var(--error){% else %}var(--success){% endif %};">
+                  {{ b.balance|currency_fmt }}
+                </strong>
+              </td>
+              <td>
+                {% if b.payment_status == 'Paid' %}
+                  <span class="badge badge-success">Paid</span>
+                {% elif b.payment_status == 'Partially Paid' %}
+                  <span class="badge badge-warning">Partially Paid</span>
+                {% else %}
+                  <span class="badge badge-danger">Unpaid</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('billing.detail', bill_id=b.bill_id) }}" class="btn btn-outline btn-sm">
+                  View Invoice &rarr;
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">&#128179;</div>
+        <div class="empty-title">No invoices recorded</div>
+        <p class="empty-text">Billing invoices generated for appointments will appear here.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

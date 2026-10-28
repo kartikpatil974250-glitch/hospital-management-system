@@ -1,0 +1,275 @@
+/* ==============================================================================
+   PULSECARE HOSPITAL MANAGEMENT SYSTEM - DASHBOARD & SPECIALIZED VIEWS
+   ============================================================================== */
+
+/* Split Screen Auth Layout */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+}
+
+.auth-panel-visual {
+  flex: 1;
+  background: linear-gradient(135deg, #1E3A8A 0%, #0D9488 100%);
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-10);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-visual-content {
+  max-width: 480px;
+  z-index: 2;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.auth-visual-content h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: var(--space-4);
+}
+
+.auth-visual-content p {
+  font-size: var(--font-size-base);
+  color: #E2E8F0;
+  line-height: 1.6;
+}
+
+.auth-panel-form {
+  width: 480px;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-10);
+  overflow-y: auto;
+}
+
+.auth-form-card {
+  width: 100%;
+}
+
+.auth-header {
+  margin-bottom: var(--space-6);
+}
+
+.auth-header h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.auth-header p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-1);
+}
+
+/* Doctor Directory Cards */
+.doctor-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.doctor-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.doctor-avatar-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--primary-blue-light), var(--secondary-teal-light));
+  color: var(--primary-blue);
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.doctor-card-name {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.doctor-card-spec {
+  color: var(--secondary-teal);
+  font-weight: 600;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2);
+}
+
+.doctor-meta-list {
+  list-style: none;
+  margin: var(--space-4) 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--space-3) 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.doctor-meta-list li {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.doctor-meta-list li span.val {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Stepper Booking Wizard */
+.wizard-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+  position: relative;
+}
+
+.wizard-steps::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 30px;
+  right: 30px;
+  height: 2px;
+  background-color: var(--border-color);
+  z-index: 1;
+}
+
+.wizard-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  background: #FFFFFF;
+  padding: 0 8px;
+}
+
+.wizard-step-num {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background-color: #F1F5F9;
+  color: var(--text-secondary);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border-color);
+  transition: all var(--transition-fast);
+}
+
+.wizard-step.active .wizard-step-num {
+  background-color: var(--primary-blue);
+  color: #FFFFFF;
+  border-color: var(--primary-blue);
+}
+
+.wizard-step.completed .wizard-step-num {
+  background-color: var(--success);
+  color: #FFFFFF;
+  border-color: var(--success);
+}
+
+.wizard-step-title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: var(--space-2);
+}
+
+.wizard-step.active .wizard-step-title {
+  color: var(--primary-blue);
+}
+
+/* Invoice Presentation */
+.invoice-card {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-sm);
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.invoice-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-6) 0;
+}
+
+.invoice-summary-table td, .invoice-summary-table th {
+  padding: 10px 14px;
+}
+
+.invoice-summary-table tr.total-row td {
+  border-top: 2px solid var(--border-color);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Printable Prescription Styling */
+.prescription-pad {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-sm);
+}
+
+.presc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid var(--secondary-teal);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.rx-symbol {
+  font-family: Georgia, serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--secondary-teal);
+  line-height: 1;
+  margin-bottom: var(--space-4);
+}
+
+@media print {
+  body { background: #FFFFFF; }
+  .app-sidebar, .app-topbar, .no-print, .btn { display: none !important; }
+  .main-content { padding: 0 !important; }
+  .invoice-card, .prescription-pad { border: none !important; box-shadow: none !important; max-width: 100% !important; padding: 0 !important; }
+}

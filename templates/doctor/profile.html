@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Profile — PulseCare HMS{% endblock %}
+{% block breadcrumb %}My Profile{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Doctor Professional Profile</h1>
+    <p class="page-subtitle">Manage your contact number, clinical qualifications, experience, and outpatient fee</p>
+  </div>
+</div>
+
+<div class="card" style="max-width: 750px;">
+  <div class="card-header">
+    <h3 class="card-title">Professional Information</h3>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('doctor.profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-control" value="{{ doctor.full_name }}" disabled style="background:#F1F5F9;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email (Login ID)</label>
+          <input type="email" class="form-control" value="{{ doctor.email }}" disabled style="background:#F1F5F9;">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Clinical Department</label>
+          <input type="text" class="form-control" value="{{ doctor.department_name }}" disabled style="background:#F1F5F9;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Specialization</label>
+          <input type="text" class="form-control" value="{{ doctor.specialization }}" disabled style="background:#F1F5F9;">
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border-color);margin:20px 0;">
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="phone">Direct Phone *</label>
+          <input type="tel" id="phone" name="phone" class="form-control" value="{{ doctor.phone }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="qualification">Qualifications (Degrees/Fellowships)</label>
+          <input type="text" id="qualification" name="qualification" class="form-control" value="{{ doctor.qualification }}">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="years_experience">Years of Experience</label>
+          <input type="number" id="years_experience" name="years_experience" class="form-control" value="{{ doctor.years_experience }}" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="consultation_fee">Consultation Fee ($)</label>
+          <input type="number" step="0.01" id="consultation_fee" name="consultation_fee" class="form-control" value="{{ doctor.consultation_fee }}" min="0" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="margin-top:10px;">
+        Update Clinical Profile
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

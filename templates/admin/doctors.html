@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Doctors — PulseCare HMS{% endblock %}
+{% block breadcrumb %}Doctors Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Doctor Management & Credentialing</h1>
+    <p class="page-subtitle">Register new physicians, assign departments, configure fees, and control active status</p>
+  </div>
+</div>
+
+<div class="grid-3">
+  <!-- Add New Doctor Form (1 Col) -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">+ Add New Doctor</h3>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin.doctors') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="action" value="add_doctor">
+
+        <div class="form-group">
+          <label class="form-label" for="full_name">Full Name *</label>
+          <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Dr. Jane Smith" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address *</label>
+          <input type="email" id="email" name="email" class="form-control" placeholder="doctor@pulsecare.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone *</label>
+          <input type="tel" id="phone" name="phone" class="form-control" placeholder="+1-555-0100" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="department_id">Department *</label>
+          <select id="department_id" name="department_id" class="form-control" required>
+            <option value="">Select Department</option>
+            {% for dept in departments %}
+              <option value="{{ dept.department_id }}">{{ dept.department_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="specialization">Specialization *</label>
+          <input type="text" id="specialization" name="specialization" class="form-control" placeholder="e.g. Cardiothoracic Surgeon" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="qualification">Qualifications</label>
+          <input type="text" id="qualification" name="qualification" class="form-control" placeholder="MD, FACC, PhD">
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="years_experience">Experience (Yrs)</label>
+            <input type="number" id="years_experience" name="years_experience" class="form-control" value="5" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="consultation_fee">Fee ($)</label>
+            <input type="number" step="0.01" id="consultation_fee" name="consultation_fee" class="form-control" value="80.00" min="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Initial Password</label>
+          <input type="text" id="password" name="password" class="form-control" value="Doctor@123">
+          <div class="form-text">Securely hashed before database persistence.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px;">
+          Register Doctor Profile
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Doctors Roster Table (2 Cols) -->
+  <div class="card" style="grid-column: span 2;">
+    <div class="card-header">
+      <h3 class="card-title">Registered Physicians</h3>
+      <span class="badge badge-info">{{ doctors|length }} Active & Inactive Doctors</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Doctor</th>
+            <th>Department</th>
+            <th>Specialization</th>
+            <th>Fee</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for doc in doctors %}
+            <tr>
+              <td>
+                <strong>{{ doc.full_name }}</strong><br>
+                <small style="color:var(--text-secondary);">{{ doc.email }} &bull; {{ doc.phone }}</small>
+              </td>
+              <td>{{ doc.department_name }}</td>
+              <td>{{ doc.specialization }}</td>
+              <td><strong>{{ doc.consultation_fee|currency_fmt }}</strong></td>
+              <td>
+                {% if doc.is_active %}
+                  <span class="badge badge-success">Active</span>
+                {% else %}
+                  <span class="badge badge-danger">Inactive</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <a href="{{ url_for('admin.edit_doctor', doctor_id=doc.doctor_id) }}" class="btn btn-outline btn-sm">
+                    Edit
+                  </a>
+                  <form method="POST" action="{{ url_for('admin.doctors') }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="action" value="toggle_active">
+                    <input type="hidden" name="doctor_id" value="{{ doc.doctor_id }}">
+                    <input type="hidden" name="current_status" value="{{ doc.is_active }}">
+                    <button type="submit" class="btn btn-outline btn-sm">
+                      {% if doc.is_active %}Deactivate{% else %}Activate{% endif %}
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
